@@ -369,23 +369,14 @@ function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
                     <td style={{
                       padding:"17px 0",
                       fontFamily:"'DM Sans',sans-serif", fontSize:16, fontWeight:700,
-                      color: drawn ? "#4CA85E" : t.accent, letterSpacing:1,
+                      color: t.accent, letterSpacing:1,
                     }}>{c.code}</td>
                     <td style={{
                       padding:"17px 0",
                       fontFamily:"'DM Sans',sans-serif", fontSize:17, lineHeight:1.4,
-                      color: drawn ? "#85BF90" : "#1a1a1a",
-                      textDecoration: drawn ? "line-through" : "none",
+                      color: "#1a1a1a",
+                      // textDecoration: drawn ? "line-through" : "none",
                     }}>{c.name}</td>
-                    <td style={{ textAlign:"right", padding:"17px 0" }}>
-                      {drawn && (
-                        <span style={{
-                          fontSize:11, fontWeight:700, letterSpacing:2, color:"#4CA85E",
-                          background:"#EBF7EE", borderRadius:7, padding:"5px 11px",
-                          textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif",
-                        }}>✓ Drawn</span>
-                      )}
-                    </td>
                   </motion.tr>
                 );
               })}
