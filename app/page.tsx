@@ -646,34 +646,53 @@ function useSoundEffects() {
     const now = ac.currentTime;
     const end = now + duration / 1000;
 
+    // Rising click track — mechanical tick that accelerates and climbs in pitch
     const master = ac.createGain();
-    master.gain.setValueAtTime(0.45, now);
-    master.gain.linearRampToValueAtTime(0, end - 0.05);
+    master.gain.setValueAtTime(0.55, now);
+    master.gain.setValueAtTime(0.55, end - 0.18);
+    master.gain.linearRampToValueAtTime(0, end);
     master.connect(ac.destination);
 
-    // Single noise buffer reused for every tick
-    const bufSize = Math.floor(ac.sampleRate * 0.018);
-    const noiseBuf = ac.createBuffer(1, bufSize, ac.sampleRate);
-    const data = noiseBuf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.35));
-    }
-
-    // Schedule every tick upfront — interval shrinks from 110ms → 22ms
     let t = now;
-    let interval = 0.11;
+    let interval = 0.18;
     while (t < end) {
-      const src = ac.createBufferSource();
-      src.buffer = noiseBuf;
-      const bpf = ac.createBiquadFilter();
-      bpf.type = "bandpass";
-      bpf.frequency.value = 160 + Math.random() * 60;
-      bpf.Q.value = 0.8;
-      src.connect(bpf);
-      bpf.connect(master);
-      src.start(t);
       const progress = (t - now) / (end - now);
-      interval = Math.max(0.022, 0.11 * (1 - progress * 0.8));
+
+      // Short sine click — pitch rises from 320 Hz to 900 Hz as we accelerate
+      const freq = 320 + progress * 580;
+      const clickDur = 0.028 - progress * 0.012; // gets snappier
+
+      const osc = ac.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+
+      const env = ac.createGain();
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.9, t + 0.003);
+      env.gain.exponentialRampToValueAtTime(0.001, t + clickDur);
+
+      osc.connect(env);
+      env.connect(master);
+      osc.start(t);
+      osc.stop(t + clickDur + 0.005);
+
+      // Sub thud underneath — fades out in the second half
+      if (progress < 0.55) {
+        const thud = ac.createOscillator();
+        thud.type = "sine";
+        thud.frequency.setValueAtTime(80, t);
+        thud.frequency.exponentialRampToValueAtTime(40, t + 0.06);
+        const thudEnv = ac.createGain();
+        thudEnv.gain.setValueAtTime(0.35 * (1 - progress * 1.5), t);
+        thudEnv.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+        thud.connect(thudEnv);
+        thudEnv.connect(master);
+        thud.start(t);
+        thud.stop(t + 0.08);
+      }
+
+      // Interval shrinks from 180ms → 28ms
+      interval = Math.max(0.028, 0.18 * Math.pow(1 - progress, 1.1));
       t += interval;
     }
   }, [getAC]);
