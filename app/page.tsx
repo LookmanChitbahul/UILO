@@ -228,7 +228,7 @@ function WinnerModal({ winner, onNext }: Readonly<WinnerModalProps>) {
           transition={{ delay:0.38, type:"spring", stiffness:260 }}
           style={{
             fontSize:120, fontWeight:700, lineHeight:1,
-            fontFamily:"'Cormorant Garamond',serif",
+            fontFamily:"'DM Sans',sans-serif",
             color:t.accent, letterSpacing:-2, marginBottom:10,
           }}
         >
@@ -733,7 +733,7 @@ export default function App() {
             fontSize:68, fontWeight:700, lineHeight:1,
             fontFamily:"'Cormorant Garamond',serif", color:"#111", letterSpacing:-2,
           }}>
-            Silver Tables
+            Company Draw
           </div>
           <div style={{ width:54, height:3, background:"#ddd", margin:"22px auto 0", borderRadius:3 }} />
         </motion.div>
