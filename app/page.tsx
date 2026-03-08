@@ -424,6 +424,14 @@ function ParticleCanvas({ phase, tier }: Readonly<ParticleCanvasProps>) {
   };
 
   useEffect(() => {
+    if (phase === "spinning") {
+      timeRef.current = 0;
+      const canvas = canvasRef.current;
+      if (canvas) initP(canvas.width, canvas.height);
+    }
+  }, [phase]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const resize = () => {
@@ -623,6 +631,119 @@ function Dropdown({ label, step, value, options, onChange, disabled, placeholder
   );
 }
 
+/* ─── SOUND EFFECTS ── */
+function useSoundEffects() {
+  const acRef = useRef<AudioContext | null>(null);
+
+  const getAC = useCallback((): AudioContext => {
+    if (!acRef.current) acRef.current = new AudioContext();
+    if (acRef.current.state === "suspended") void acRef.current.resume();
+    return acRef.current;
+  }, []);
+
+  const playDrumroll = useCallback((duration: number) => {
+    const ac = getAC();
+    const now = ac.currentTime;
+    const end = now + duration / 1000;
+
+    const master = ac.createGain();
+    master.gain.setValueAtTime(0.45, now);
+    master.gain.linearRampToValueAtTime(0, end - 0.05);
+    master.connect(ac.destination);
+
+    // Single noise buffer reused for every tick
+    const bufSize = Math.floor(ac.sampleRate * 0.018);
+    const noiseBuf = ac.createBuffer(1, bufSize, ac.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.35));
+    }
+
+    // Schedule every tick upfront — interval shrinks from 110ms → 22ms
+    let t = now;
+    let interval = 0.11;
+    while (t < end) {
+      const src = ac.createBufferSource();
+      src.buffer = noiseBuf;
+      const bpf = ac.createBiquadFilter();
+      bpf.type = "bandpass";
+      bpf.frequency.value = 160 + Math.random() * 60;
+      bpf.Q.value = 0.8;
+      src.connect(bpf);
+      bpf.connect(master);
+      src.start(t);
+      const progress = (t - now) / (end - now);
+      interval = Math.max(0.022, 0.11 * (1 - progress * 0.8));
+      t += interval;
+    }
+  }, [getAC]);
+
+  const playWhoosh = useCallback(() => {
+    const ac = getAC();
+    const now = ac.currentTime;
+    const osc = ac.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(1400, now + 0.55);
+    const filter = ac.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(300, now);
+    filter.frequency.exponentialRampToValueAtTime(5000, now + 0.55);
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.55);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.6);
+  }, [getAC]);
+
+  const playFanfare = useCallback((tier: TierKey) => {
+    const ac = getAC();
+    const now = ac.currentTime;
+    const noteFreqs: Record<TierKey, number[]> = {
+      bronze: [261.63, 329.63, 392.00, 523.25], // C4 E4 G4 C5
+      silver: [293.66, 369.99, 440.00, 587.33],  // D4 F#4 A4 D5
+      gold:   [349.23, 440.00, 523.25, 698.46],  // F4 A4 C5 F5
+    };
+    const freqs = noteFreqs[tier];
+    // Ascending arpeggio
+    freqs.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const gain = ac.createGain();
+      const t = now + i * 0.12;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.22, t + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(t);
+      osc.stop(t + 0.65);
+    });
+    // Final full chord
+    const chordStart = now + freqs.length * 0.12 + 0.08;
+    freqs.forEach(freq => {
+      const osc = ac.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0, chordStart);
+      gain.gain.linearRampToValueAtTime(0.14, chordStart + 0.06);
+      gain.gain.setValueAtTime(0.14, chordStart + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, chordStart + 1.1);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(chordStart);
+      osc.stop(chordStart + 1.2);
+    });
+  }, [getAC]);
+
+  return { playDrumroll, playWhoosh, playFanfare };
+}
+
 /* ─── APP ── */
 export default function App() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -632,6 +753,7 @@ export default function App() {
   const [confetti, setConfetti] = useState(false);
   const [seeAll, setSeeAll] = useState(false);
   const [drawnCodes, setDrawnCodes] = useState<Set<string>>(new Set());
+  const { playDrumroll, playWhoosh, playFanfare } = useSoundEffects();
 
   useEffect(() => {
     const fontLink = document.createElement("link");
@@ -660,15 +782,18 @@ export default function App() {
     if (!canDraw || !selCompany) return;
     const win = companies.find(c => c.code === selCompany.value);
     if (!win) return;
+    const tier = getTier(win.code);
     setPhase("spinning");
-    setTimeout(() => setPhase("explode"), 3600);
+    playDrumroll(3600);
+    setTimeout(() => { setPhase("explode"); playWhoosh(); }, 3600);
     setTimeout(() => {
       setWinner(win);
       setPhase("reveal");
       setConfetti(true);
       setDrawnCodes(prev => new Set([...prev, win.code]));
+      playFanfare(tier);
     }, 4200);
-  }, [canDraw, selCompany]);
+  }, [canDraw, selCompany, playDrumroll, playWhoosh, playFanfare]);
 
   const reset = () => {
     setConfetti(false);
@@ -835,7 +960,7 @@ export default function App() {
         {drawnCodes.size > 0 && (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }}
             style={{ marginTop:22, fontSize:15, color:"#4CA85E", fontFamily:"'DM Sans',sans-serif", fontWeight:700, letterSpacing:1 }}>
-            ✓ {drawnCodes.size} winner{drawnCodes.size > 1 ? "s" : ""} drawn today
+            ✓ {drawnCodes.size} winner{drawnCodes.size > 1 ? "s" : ""} drawn
           </motion.div>
         )}
       </div>
