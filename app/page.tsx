@@ -56,9 +56,9 @@ const companies: Company[] = [
   { name: "BDO & Co", code: "BS5" },
   { name: "SIL", code: "BS12" },
   { name: "IBL LTD – Healthactiv & Medical Trading Company (MedActiv)", code: "BS1" },
-  { name: "KPMG", code: "SS1" },
+  { name: "KPMG", code: "SS3" },
   { name: "Aberdeen Operations Ltd", code: "SS2" },
-  { name: "Currimjee Jeewanjee and Company Limited", code: "SS3" },
+  { name: "Currimjee Jeewanjee and Company Limited", code: "SS1" },
   { name: "Business At Work (Mtius) Ltd", code: "SS4" },
   { name: "Deloitte", code: "GS7" },
   { name: "Rogers Capital", code: "GS6" },
@@ -763,6 +763,188 @@ function useSoundEffects() {
   return { playDrumroll, playWhoosh, playFanfare };
 }
 
+/* ─── PASSWORD MODAL ── */
+const ADMIN_PASSWORD = "PASSWORD";
+
+interface PasswordModalProps {
+  onSuccess: () => void;
+  onClose: () => void;
+}
+
+function PasswordModal({ onSuccess, onClose }: Readonly<PasswordModalProps>) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const submit = () => {
+    if (value === ADMIN_PASSWORD) {
+      setError(false);
+      onSuccess();
+    } else {
+      setError(true);
+      setValue("");
+      inputRef.current?.focus();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+      style={{
+        position:"fixed", inset:0, zIndex:9995,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        background:"rgba(245,242,237,0.75)", backdropFilter:"blur(18px)",
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale:0.88, y:30, opacity:0 }}
+        animate={{ scale:1, y:0, opacity:1 }}
+        exit={{ scale:0.88, y:20, opacity:0 }}
+        transition={{ type:"spring", stiffness:260, damping:20 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background:"#fff", borderRadius:24,
+          padding:"52px 56px", textAlign:"center",
+          width:"min(420px, 90vw)",
+          boxShadow:"0 4px 8px rgba(0,0,0,0.04), 0 24px 70px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+        }}
+      >
+        <div style={{ fontSize:13, letterSpacing:5, color:"#bbb", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, marginBottom:10 }}>Access Required</div>
+        <div style={{ fontSize:32, fontWeight:700, color:"#111", fontFamily:"'Cormorant Garamond',serif", marginBottom:32 }}>Enter Password</div>
+
+        <input
+          ref={inputRef}
+          type="password"
+          value={value}
+          onChange={e => { setValue(e.target.value); setError(false); }}
+          onKeyDown={e => { if (e.key === "Enter") submit(); if (e.key === "Escape") onClose(); }}
+          placeholder="Password"
+          style={{
+            width:"100%", padding:"16px 20px", fontSize:18,
+            border:`2px solid ${error ? "#e05050" : "#e0dbd4"}`,
+            borderRadius:14, outline:"none", boxSizing:"border-box",
+            fontFamily:"'DM Sans',sans-serif",
+            background: error ? "#fff8f8" : "#fff",
+            color:"#111", textAlign:"center", letterSpacing:4,
+            transition:"border-color 0.2s, background 0.2s",
+          }}
+        />
+        {error && (
+          <motion.div initial={{ opacity:0, y:-4 }} animate={{ opacity:1, y:0 }}
+            style={{ fontSize:13, color:"#e05050", marginTop:10, fontFamily:"'DM Sans',sans-serif", fontWeight:600 }}>
+            Incorrect password
+          </motion.div>
+        )}
+
+        <div style={{ display:"flex", gap:12, marginTop:28 }}>
+          <button onClick={onClose} style={{
+            flex:1, padding:"15px 0", borderRadius:12,
+            border:"1.5px solid #e0dbd4", background:"transparent",
+            cursor:"pointer", fontSize:15, color:"#888",
+            fontFamily:"'DM Sans',sans-serif", fontWeight:600,
+          }}>Cancel</button>
+          <button onClick={submit} style={{
+            flex:2, padding:"15px 0", borderRadius:12,
+            border:"none", background:"#111",
+            cursor:"pointer", fontSize:15, color:"#fff",
+            fontFamily:"'DM Sans',sans-serif", fontWeight:700, letterSpacing:2,
+            textTransform:"uppercase",
+          }}>Unlock</button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ─── ADMIN MODAL ── */
+function AdminModal({ onClose }: Readonly<{ onClose: () => void }>) {
+  const [randomised, setRandomised] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+      style={{
+        position:"fixed", inset:0, zIndex:9975,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        background:"rgba(236,232,226,0.72)", backdropFilter:"blur(16px)",
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y:50, opacity:0, scale:0.97 }}
+        animate={{ y:0, opacity:1, scale:1 }}
+        exit={{ y:30, opacity:0 }}
+        transition={{ type:"spring", stiffness:260, damping:22 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background:"#fefefe", borderRadius:24,
+          width:"min(520px, 92vw)",
+          overflow:"hidden",
+          boxShadow:"0 4px 8px rgba(0,0,0,0.04), 0 28px 70px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.07)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ padding:"38px 42px 32px", borderBottom:"1px solid #f0ede8", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontSize:12, letterSpacing:5, color:"#bbb", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, marginBottom:8 }}>Admin Panel</div>
+            <div style={{ fontSize:32, fontWeight:700, color:"#111", fontFamily:"'Cormorant Garamond',serif" }}>Controls</div>
+          </div>
+          <button onClick={onClose} style={{
+            background:"#f2f0ec", border:"none", borderRadius:50,
+            width:42, height:42, cursor:"pointer", fontSize:22, color:"#888",
+            display:"flex", alignItems:"center", justifyContent:"center",
+          }}>×</button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding:"36px 42px 44px" }}>
+          <div style={{ fontSize:13, letterSpacing:3, color:"#bbb", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, marginBottom:18 }}>Draw Order</div>
+
+          <div style={{
+            background:"#faf8f5", borderRadius:16, padding:"22px 26px",
+            border:"1px solid #ede9e3", marginBottom:28,
+            fontSize:15, color:"#999", fontFamily:"'DM Sans',sans-serif", lineHeight:1.6,
+          }}>
+            The draw order follows the current participant list.
+            Use Randomise to shuffle the order for the next session.
+          </div>
+
+          <motion.button
+            whileHover={{ scale:1.03 }}
+            whileTap={{ scale:0.97 }}
+            onClick={() => setRandomised(true)}
+            style={{
+              width:"100%", padding:"20px",
+              background: randomised ? "#f0faf2" : "#111",
+              border: randomised ? "2px solid #4CA85E" : "none",
+              borderRadius:16, cursor:"pointer",
+              fontSize:17, fontWeight:700, letterSpacing:3,
+              textTransform:"uppercase",
+              color: randomised ? "#4CA85E" : "#fff",
+              fontFamily:"'DM Sans',sans-serif",
+              transition:"background 0.25s, color 0.25s, border 0.25s",
+            }}
+          >
+            {randomised ? "✓ Randomised" : "Randomise"}
+          </motion.button>
+
+          {randomised && (
+            <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }}
+              style={{ marginTop:14, fontSize:13, color:"#4CA85E", textAlign:"center", fontFamily:"'DM Sans',sans-serif", fontWeight:600 }}>
+              Order will be applied on next session
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* ─── APP ── */
 export default function App() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -771,6 +953,8 @@ export default function App() {
   const [winner, setWinner] = useState<Company | null>(null);
   const [confetti, setConfetti] = useState(false);
   const [seeAll, setSeeAll] = useState(false);
+  const [admin, setAdmin] = useState(false);
+  const [passwordTarget, setPasswordTarget] = useState<"seeAll" | "admin" | null>(null);
   const [drawnCodes, setDrawnCodes] = useState<Set<string>>(new Set());
   const { playDrumroll, playWhoosh, playFanfare } = useSoundEffects();
 
@@ -818,7 +1002,6 @@ export default function App() {
     setConfetti(false);
     setWinner(null);
     setPhase("idle");
-    setSelTier(null);
     setSelCompany(null);
   };
 
@@ -844,6 +1027,19 @@ export default function App() {
       {/* Modals at 9990 and 9970 */}
       <AnimatePresence>{winner && <WinnerModal winner={winner} onNext={reset} />}</AnimatePresence>
       <AnimatePresence>{seeAll && <SeeAllModal onClose={() => setSeeAll(false)} drawnCodes={drawnCodes} />}</AnimatePresence>
+      <AnimatePresence>{admin && <AdminModal onClose={() => setAdmin(false)} />}</AnimatePresence>
+      <AnimatePresence>
+        {passwordTarget && (
+          <PasswordModal
+            onClose={() => setPasswordTarget(null)}
+            onSuccess={() => {
+              if (passwordTarget === "seeAll") setSeeAll(true);
+              if (passwordTarget === "admin") setAdmin(true);
+              setPasswordTarget(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── UI Panel ── */}
       <div style={{
@@ -984,26 +1180,46 @@ export default function App() {
         )}
       </div>
 
-      {/* See All */}
-      <motion.button
-        initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1 }}
-        whileHover={{ scale:1.04, boxShadow:"0 6px 24px rgba(0,0,0,0.1)" }}
-        whileTap={{ scale:0.97 }}
-        onClick={() => setSeeAll(true)}
-        style={{
-          position:"fixed", bottom:30, left:30, zIndex:20,
-          background:"rgba(255,255,255,0.90)", backdropFilter:"blur(14px)",
-          border:"1.5px solid rgba(0,0,0,0.09)", borderRadius:16,
-          padding:"15px 28px", cursor:"pointer",
-          display:"flex", alignItems:"center", gap:10,
-          fontSize:16, color:"#555", letterSpacing:0.5,
-          fontFamily:"'DM Sans',sans-serif", fontWeight:600,
-          boxShadow:"0 2px 18px rgba(0,0,0,0.07)",
-          transition:"color 0.2s",
-        }}
-      >
-        <span style={{ fontSize:20, lineHeight:1 }}>≡{" "}</span>See All
-      </motion.button>
+      {/* See All + Admin */}
+      <div style={{ position:"fixed", bottom:30, left:30, zIndex:20, display:"flex", flexDirection:"column", gap:10 }}>
+        <motion.button
+          initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1 }}
+          whileHover={{ scale:1.04, boxShadow:"0 6px 24px rgba(0,0,0,0.1)" }}
+          whileTap={{ scale:0.97 }}
+          onClick={() => setPasswordTarget("seeAll")}
+          style={{
+            background:"rgba(255,255,255,0.90)", backdropFilter:"blur(14px)",
+            border:"1.5px solid rgba(0,0,0,0.09)", borderRadius:16,
+            padding:"15px 28px", cursor:"pointer",
+            display:"flex", alignItems:"center", gap:10,
+            fontSize:16, color:"#555", letterSpacing:0.5,
+            fontFamily:"'DM Sans',sans-serif", fontWeight:600,
+            boxShadow:"0 2px 18px rgba(0,0,0,0.07)",
+            transition:"color 0.2s",
+          }}
+        >
+          <span style={{ fontSize:20, lineHeight:1 }}>≡{" "}</span>See All
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.1 }}
+          whileHover={{ scale:1.04, boxShadow:"0 6px 24px rgba(0,0,0,0.1)" }}
+          whileTap={{ scale:0.97 }}
+          onClick={() => setPasswordTarget("admin")}
+          style={{
+            background:"rgba(255,255,255,0.90)", backdropFilter:"blur(14px)",
+            border:"1.5px solid rgba(0,0,0,0.09)", borderRadius:16,
+            padding:"15px 28px", cursor:"pointer",
+            display:"flex", alignItems:"center", gap:10,
+            fontSize:16, color:"#555", letterSpacing:0.5,
+            fontFamily:"'DM Sans',sans-serif", fontWeight:600,
+            boxShadow:"0 2px 18px rgba(0,0,0,0.07)",
+            transition:"color 0.2s",
+          }}
+        >
+          <span style={{ fontSize:18, lineHeight:1 }}>⚙{" "}</span>Admin
+        </motion.button>
+      </div>
 
       <div style={{
         position:"fixed", bottom:38, right:32, zIndex:20,
