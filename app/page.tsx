@@ -274,6 +274,46 @@ interface SeeAllModalProps {
 
 function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
   const [tab, setTab] = useState<TierKey>("bronze");
+  const list = byTier[tab];
+  const half = Math.ceil(list.length / 2);
+  const leftCol = list.slice(0, half);
+  const rightCol = list.slice(half);
+
+  const renderRows = (rows: Company[]) =>
+    rows.map((c, i) => {
+      const t = TIERS[tab];
+      const drawn = drawnCodes.has(c.code);
+      return (
+        <motion.tr key={c.code}
+          initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }}
+          transition={{ delay: i * 0.018 }}
+          style={{ borderBottom:"1px solid #f0ede8" }}
+        >
+          <td style={{
+            padding:"16px 18px 16px 0",
+            fontFamily:"'DM Sans',sans-serif", fontSize:20, fontWeight:700,
+            color: drawn ? "#4CA85E" : t.accent, letterSpacing:1,
+            whiteSpace:"nowrap",
+          }}>{c.code}</td>
+          <td style={{
+            padding:"16px 0",
+            fontFamily:"'DM Sans',sans-serif", fontSize:21, lineHeight:1.3,
+            color: drawn ? "#85BF90" : "#1a1a1a",
+            textDecoration: drawn ? "line-through" : "none",
+          }}>{c.name}</td>
+        </motion.tr>
+      );
+    });
+
+  const tableHead = (
+    <thead>
+      <tr>
+        <th style={{ textAlign:"left", padding:"14px 18px 14px 0", fontSize:13, letterSpacing:4, color:"#c0b8ae", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, borderBottom:"2px solid #ede9e3", whiteSpace:"nowrap" }}>Stand</th>
+        <th style={{ textAlign:"left", padding:"14px 0", fontSize:13, letterSpacing:4, color:"#c0b8ae", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, borderBottom:"2px solid #ede9e3" }}>Company</th>
+      </tr>
+    </thead>
+  );
+
   return (
     <motion.div
       initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
@@ -281,32 +321,33 @@ function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
         position:"fixed", inset:0, zIndex:9970,
         display:"flex", alignItems:"center", justifyContent:"center",
         background:"rgba(236,232,226,0.72)", backdropFilter:"blur(16px)",
+        padding:"16px",
       }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ y:50, opacity:0, scale:0.97 }}
+        initial={{ y:40, opacity:0, scale:0.97 }}
         animate={{ y:0, opacity:1, scale:1 }}
         exit={{ y:30, opacity:0 }}
         transition={{ type:"spring", stiffness:260, damping:22 }}
         onClick={e => e.stopPropagation()}
         style={{
-          background:"#fefefe", borderRadius:24,
-          width:"min(740px, 92vw)", maxHeight:"84vh",
+          background:"#fefefe", borderRadius:28,
+          width:"min(1400px, 98vw)",
           overflow:"hidden", display:"flex", flexDirection:"column",
           boxShadow:"0 4px 8px rgba(0,0,0,0.04), 0 28px 70px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.07)",
         }}
       >
         {/* Header */}
-        <div style={{ padding:"38px 42px 0", borderBottom:"1px solid #f0ede8" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:30 }}>
+        <div style={{ padding:"36px 52px 0", borderBottom:"1px solid #f0ede8", flexShrink:0 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:26 }}>
             <div>
-              <div style={{ fontSize:12, letterSpacing:5, color:"#bbb", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, marginBottom:8 }}>All Participants</div>
-              <div style={{ fontSize:36, fontWeight:700, color:"#111", fontFamily:"'Cormorant Garamond',serif" }}>Company Directory</div>
+              <div style={{ fontSize:13, letterSpacing:5, color:"#bbb", textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif", fontWeight:700, marginBottom:8 }}>All Participants</div>
+              <div style={{ fontSize:40, fontWeight:700, color:"#111", fontFamily:"'Cormorant Garamond',serif" }}>Company Directory</div>
             </div>
             <button onClick={onClose} style={{
               background:"#f2f0ec", border:"none", borderRadius:50,
-              width:42, height:42, cursor:"pointer", fontSize:22, color:"#888",
+              width:48, height:48, cursor:"pointer", fontSize:24, color:"#888",
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>×</button>
           </div>
@@ -318,17 +359,17 @@ function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
               const drawn = byTier[tier].filter(c => drawnCodes.has(c.code)).length;
               return (
                 <button key={tier} onClick={() => setTab(tier)} style={{
-                  padding:"13px 30px", borderRadius:"10px 10px 0 0",
+                  padding:"14px 34px", borderRadius:"10px 10px 0 0",
                   border:"none", cursor:"pointer",
                   background: active ? t.light : "transparent",
                   color: active ? t.color : "#aaa",
                   fontFamily:"'DM Sans',sans-serif",
-                  fontSize:16, fontWeight: active ? 700 : 500,
+                  fontSize:18, fontWeight: active ? 700 : 500,
                   borderBottom: active ? `3px solid ${t.accent}` : "3px solid transparent",
                   transition:"all 0.18s",
                 }}>
                   {t.label}
-                  <span style={{ opacity:0.5, fontSize:13, marginLeft:7 }}>
+                  <span style={{ opacity:0.5, fontSize:14, marginLeft:8 }}>
                     ({byTier[tier].length}{drawn > 0 ? ` · ${drawn} drawn` : ""})
                   </span>
                 </button>
@@ -337,51 +378,26 @@ function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
           </div>
         </div>
 
-        {/* Table */}
-        <div style={{ overflowY:"auto", padding:"0 42px 38px" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse", marginTop:22 }}>
-            <thead>
-              <tr>
-                {["Stand","Company",""].map((h,i) => {
-                  const colWidths: (number | string)[] = [100, "auto", 90];
-                  return (
-                  <th key={h} style={{
-                    textAlign:"left", padding:"12px 0",
-                    fontSize:12, letterSpacing:4, color:"#c0b8ae",
-                    textTransform:"uppercase", fontFamily:"'DM Sans',sans-serif",
-                    fontWeight:700, borderBottom:"1px solid #f0ede8",
-                    width: colWidths[i],
-                  }}>{h}</th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {byTier[tab].map((c, i) => {
-                const t = TIERS[tab];
-                const drawn = drawnCodes.has(c.code);
-                return (
-                  <motion.tr key={c.code}
-                    initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }}
-                    transition={{ delay: i*0.025 }}
-                    style={{ borderBottom:"1px solid #f8f6f2" }}
-                  >
-                    <td style={{
-                      padding:"17px 0",
-                      fontFamily:"'DM Sans',sans-serif", fontSize:16, fontWeight:700,
-                      color: t.accent, letterSpacing:1,
-                    }}>{c.code}</td>
-                    <td style={{
-                      padding:"17px 0",
-                      fontFamily:"'DM Sans',sans-serif", fontSize:17, lineHeight:1.4,
-                      color: "#1a1a1a",
-                      // textDecoration: drawn ? "line-through" : "none",
-                    }}>{c.name}</td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* 4-column body */}
+        <div style={{ padding:"24px 52px 44px", display:"flex", gap:0 }}>
+          {/* Left half */}
+          <div style={{ flex:1, minWidth:0 }}>
+            <table style={{ width:"100%", borderCollapse:"collapse" }}>
+              {tableHead}
+              <tbody>{renderRows(leftCol)}</tbody>
+            </table>
+          </div>
+
+          {/* Vertical divider */}
+          <div style={{ width:2, background:"#ede9e3", margin:"0 40px", flexShrink:0 }} />
+
+          {/* Right half */}
+          <div style={{ flex:1, minWidth:0 }}>
+            <table style={{ width:"100%", borderCollapse:"collapse" }}>
+              {tableHead}
+              <tbody>{renderRows(rightCol)}</tbody>
+            </table>
+          </div>
         </div>
       </motion.div>
     </motion.div>
