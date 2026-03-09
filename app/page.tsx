@@ -53,7 +53,7 @@ const companies: Company[] = [
   { name: "Accenture", code: "BS4" },
   { name: "TeakWorld", code: "BS3" },
   { name: "Checkout", code: "BS2" },
-  { name: "BDO & Co", code: "BS5" },
+  { name: "BDO LLP", code: "BS5" },
   { name: "SIL", code: "BS12" },
   { name: "IBL LTD – Healthactiv & Medical Trading Company (MedActiv)", code: "BS1" },
   { name: "KPMG", code: "SS3" },
@@ -292,14 +292,13 @@ function SeeAllModal({ onClose, drawnCodes }: Readonly<SeeAllModalProps>) {
           <td style={{
             padding:"16px 18px 16px 0",
             fontFamily:"'DM Sans',sans-serif", fontSize:20, fontWeight:700,
-            color: drawn ? "#4CA85E" : t.accent, letterSpacing:1,
+            color: t.accent, letterSpacing:1,
             whiteSpace:"nowrap",
           }}>{c.code}</td>
           <td style={{
             padding:"16px 0",
             fontFamily:"'DM Sans',sans-serif", fontSize:21, lineHeight:1.3,
-            color: drawn ? "#85BF90" : "#1a1a1a",
-            textDecoration: drawn ? "line-through" : "none",
+            color: t.accent, letterSpacing:1,
           }}>{c.name}</td>
         </motion.tr>
       );
@@ -622,9 +621,9 @@ function Dropdown({ label, step, value, options, onChange, disabled, placeholder
                 >
                   <span style={{
                     fontSize:19, lineHeight:1.35,
-                    color: opt.drawn ? "#4CA85E" : "#1a1a1a",
+                    color: "#1a1a1a",
                     fontFamily:"'DM Sans',sans-serif", fontWeight:500,
-                    textDecoration: opt.drawn ? "line-through" : "none",
+                    // textDecoration: opt.drawn ? "line-through" : "none",
                     flexGrow:1,
                   }}>
                     {opt.label}
